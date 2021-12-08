@@ -16,7 +16,8 @@ import java.util.List;
  * @since  : 5-12-2021.
  */
 
-@RestController(value = "/atm")
+@RestController
+@RequestMapping(value = "/atm")
 public class AtmController {
 
     @Autowired
@@ -27,7 +28,7 @@ public class AtmController {
      *
      * @return : atm service to get all atm.
      */
-    @GetMapping(value = "/get-all-atm")
+    @GetMapping(value = "/get-all")
     public List<AtmDto> getAllAtm() {
         return atmService.getAllAtm();
     }
@@ -38,10 +39,10 @@ public class AtmController {
      * @param atmDto : atmDto is used to add card details as per regex pattern.
      * @return : atm service to add all atm details.
      */
-    @PostMapping(value = "/add-atm")
+    @PostMapping(value = "/add")
     public String addAtm(@Valid @RequestBody AtmDto atmDto) {
         return atmService.addAtm(atmDto);
-//   POST-->     http://localhost:8080/add-atm
+//   POST-->     http://localhost:8080/add
     }
 
     /**

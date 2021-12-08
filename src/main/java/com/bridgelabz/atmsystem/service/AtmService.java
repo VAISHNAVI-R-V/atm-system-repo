@@ -1,16 +1,19 @@
 package com.bridgelabz.atmsystem.service;
 
 import com.bridgelabz.atmsystem.entity.AtmEntity;
-import com.bridgelabz.atmsystem.repository.AtmRepo;
+import com.bridgelabz.atmsystem.exception.AtmCustomException;
+import com.bridgelabz.atmsystem.repository.AtmRepository;
 import com.bridgelabz.atmsystem.dto.AtmDto;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Purpose : To implement atm-system Program.
+ * Purpose : To implement AtmService class in atm-system Program.
  *
  * @author : VAISHNAVI R. VISHWAKARMA.
  * @since  : 5-12-2021.
@@ -22,7 +25,9 @@ public class AtmService {
     private static final String ATM_ADDED_SUCCESSFULLY = "Atm Added Successfully!";
 
     @Autowired
-    private AtmRepo atmRepo;
+    private AtmRepository atmRepository;
+    @Autowired
+    private ModelMapper modelMapper;
 
     /**
      * @purpose : To get the list of all card details.
@@ -30,17 +35,21 @@ public class AtmService {
      * @return : AtmDto card details as per regex pattern.
      */
     public List<AtmDto> getAllAtm() {
-        return atmRepo
-                .findAll()
+        return atmRepository.findAll()
                 .stream()
-                .map(atmEntity -> {
-                    AtmDto atmDto = new AtmDto();
-                    atmDto.setCardNumber(atmEntity.getCardNumber());
-                    atmDto.setCardName(atmEntity.getCardName());
-                    atmDto.setCvv(atmEntity.getCvv());
-                    return atmDto;
-                })
-                .collect(Collectors.toList());
+                .map(atmEntity -> modelMapper.map(atmEntity, AtmDto.class))
+                .collect((Collectors.toList()));
+//        return atmRepository
+//                .findAll()
+//                .stream()
+//                .map(atmEntity -> {
+//                    AtmDto atmDto = new AtmDto();
+//                    atmDto.setCardNumber(atmEntity.getCardNumber());
+//                    atmDto.setCardName(atmEntity.getCardName());
+//                    atmDto.setCvv(atmEntity.getCvv());
+//                    return atmDto;
+//                })
+//                .collect(Collectors.toList());
     }
 
     /**
@@ -50,27 +59,41 @@ public class AtmService {
      * @return : message that is atm card is added successfully!
      */
     public String addAtm(AtmDto atmDto) {
-        AtmEntity atmEntity = new AtmEntity();
-        atmEntity.setCardNumber(atmDto.getCardNumber());
-        atmEntity.setCardName(atmDto.getCardName());
-        atmEntity.setCvv(atmDto.getCvv());
-        atmRepo.save(atmEntity);
+        AtmEntity atmEntity = modelMapper.map(atmDto, AtmEntity.class);
+        atmRepository.save(atmEntity);
         return ATM_ADDED_SUCCESSFULLY;
+
+//        AtmEntity atmEntity = new AtmEntity();
+//        atmEntity.setCardNumber(atmDto.getCardNumber());
+//        atmEntity.setCardName(atmDto.getCardName());
+//        atmEntity.setCvv(atmDto.getCvv());
+//        atmRepository.save(atmEntity);
+//        return ATM_ADDED_SUCCESSFULLY;
     }
 
     /**
      * @purpose : To Update single or multiple card details in the data.
      *
-     * @param id : As per id card details will be updated.
+     * @param id     : As per id card details will be updated.
      * @param atmDto : atmDto is used to update card details as per regex pattern.
      * @return : atm repo interface through atmDto class to save all updated card details.
      */
     public AtmEntity updateAtm(int id, AtmDto atmDto) {
-        AtmEntity cardUpdate = atmRepo.findById(id).get();
-        cardUpdate.setCardNumber(atmDto.getCardNumber());
-        cardUpdate.setCardName(atmDto.getCardName());
-        cardUpdate.setCvv(atmDto.getCvv());
-        return atmRepo.save(cardUpdate);
+        Optional<AtmEntity> atmDetails = atmRepository.findById(id);
+        if (atmDetails.isPresent()) {
+        AtmEntity cardUpdate = atmRepository.findById(id).get();
+        modelMapper.map(atmDto, cardUpdate);
+        return atmRepository.save(cardUpdate);
+    }
+    throw new AtmCustomException("Atm card details are not found by this id : "+id);
+
+//        AtmEntity cardUpdate =atmRepository.findById(id).get();
+//        cardUpdate.setCardNumber(atmDto.getCardNumber());
+//        cardUpdate.setCardName(atmDto.getCardName());
+//        cardUpdate.setCvv(atmDto.getCvv());
+//        return atmRepository.save(cardUpdate);
+//    throw new AtmServiceCustomException("Atm records are not found by this id : " + id);
+//}
     }
 
     /**
@@ -80,8 +103,12 @@ public class AtmService {
      * @return : atm repo interface through atmDto class to delete card details.
      */
     public AtmEntity delete(int id) {
-        AtmEntity cardDelete = atmRepo.findById(id).get();
-        atmRepo.delete(cardDelete);
+        Optional<AtmEntity> atmEntity = atmRepository.findById(id);
+        if (atmEntity.isPresent()) {
+        AtmEntity cardDelete = atmRepository.findById(id).get();
+        atmRepository.delete(cardDelete);
         return cardDelete;
+    }
+        throw new AtmCustomException("Atm card details are not existed by this id : " + id);
     }
 }
